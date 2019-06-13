@@ -1,6 +1,6 @@
 ---
 - name: Install filebeat
-  hosts: elk.acirrustech.com
+  hosts: localhost
   become: yes
   become_user: root
   tasks:
@@ -38,7 +38,7 @@
       - name: Line change
         replace: 
           path: /etc/filebeat/filebeat.yml 
-          regexp: '\ \ hosts: \["elk.acirrustech.com:9200"\]' 
+          regexp: '\ \ hosts: \["localhost:9200"\]' 
           replace: '  #hosts: ["elk.acirrustech.com:9200"]'
       - name: Line change
         replace: 
@@ -49,7 +49,7 @@
         replace: 
           path: /etc/filebeat/filebeat.yml 
           regexp: '\ \ #hosts: \["localhost:5044"\]' 
-          replace: '  hosts: ["localhost:5044"]'
+          replace: '  hosts: ["elk.acirrustech.com:5044"]'
       - name: filebeat modules
         shell: "sudo filebeat modules enable system"
       
@@ -58,3 +58,9 @@
       systemd:
         name: filebeat
         state: restarted
+
+    - name: Created a Repository
+      copy:
+        src: filebeat.repo
+        dest: /etc/yum.repos.d/filebeat.repo
+
