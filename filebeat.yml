@@ -11,13 +11,13 @@
     - block:
       - name: Install filebeat repo on centos 7
         get_url:
-          url: "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.1.1-x86_64.rpm"
+          url:  "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-6.8.0-x86_64.rpm"
           dest: /tmp
         # shell: "curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.1.1-x86_64.rpm"
       - name: Install from rpm
         # shell: "rpm -vU filebeat-7.1.1-x86_64.rpm"
         yum:
-           name: /tmp/filebeat-7.1.1-x86_64.rpm
+           name: /tmp/filebeat-6.8.0-x86_64.rpm
            state: present
         notify: FILEBEAT_CENTOS_7
         # ignore_errors: true
