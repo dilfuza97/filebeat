@@ -1,66 +1,51 @@
 ---
-- name: Install filebeat
-  hosts: localhost
+- name: Install and configure filebeat
+  hosts: "{{host}}"
   become: yes
-  become_user: root
+  become_method: sudo
   tasks:
-    - name: install epel-release
-      yum:
-         name: epel-release
-         state: latest
-    - block:
-      - name: Install filebeat repo on centos 7
-        get_url:
-          url:  "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-6.8.0-x86_64.rpm"
-          dest: /tmp
-        # shell: "curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.1.1-x86_64.rpm"
-      - name: Install from rpm
-        # shell: "rpm -vU filebeat-7.1.1-x86_64.rpm"
-        yum:
-           name: /tmp/filebeat-6.8.0-x86_64.rpm
-           state: present
-        notify: FILEBEAT_CENTOS_7
-        # ignore_errors: true
-      # when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
-      - name: Start filebeat
-        service:
-          name: filebeat
-          state: started
-      - name: Enable filebeat
-        service:
-          name: filebeat
-          enabled: yes
-      - name: Line change
-        replace: 
-          path: /etc/filebeat/filebeat.yml 
-          regexp: 'output.elasticsearch:' 
-          replace: '#output.elasticsearch:'
-      - name: Line change
-        replace: 
-          path: /etc/filebeat/filebeat.yml 
-          regexp: '\ \ hosts: \["localhost:9200"\]' 
-          replace: '  #hosts: ["elk.acirrustech.com:9200"]'
-      - name: Line change
-        replace: 
-          path: /etc/filebeat/filebeat.yml 
-          regexp: '#output.logstash:' 
-          replace: 'output.logstash:'
-      - name: Line change
-        replace: 
-          path: /etc/filebeat/filebeat.yml 
-          regexp: '\ \ #hosts: \["localhost:5044"\]' 
-          replace: '  hosts: ["elk.acirrustech.com:5044"]'
-      - name: filebeat modules
-        shell: "sudo filebeat modules enable system"
-      
-  handlers:
-    - name: FILEBEAT_CENTOS_7
-      systemd:
-        name: filebeat
-        state: restarted
-
     - name: Created a Repository
       copy:
         src: filebeat.repo
         dest: /etc/yum.repos.d/filebeat.repo
 
+    - name: Download and install the Elasticsearch public signing key
+      rpm_key:
+        state: present
+        key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+  
+    - name: Install filebeat
+      package:
+        name: filebeat
+        state: present
+    - name: Disable elasticsearch output line 1
+      replace: 
+          path: /etc/filebeat/filebeat.yml 
+          regexp: 'output.elasticsearch' 
+          replace: '#output.elasticsearch'
+    - name: Disable elasticsearch output line 2
+      replace: 
+        path: /etc/filebeat/filebeat.yml 
+        regexp: '\ \ hosts: \["localhost:9200"\]' 
+        replace: '  #hosts: ["elk.acirrustech.com:9200"]'
+    - name: Enable elasticsearch output line 1
+      replace: 
+        path: /etc/filebeat/filebeat.yml 
+        regexp: '#output.logstash:' 
+        replace: 'output.logstash:'
+    - name: Enable elasticsearch output line 2
+      replace: 
+        path: /etc/filebeat/filebeat.yml 
+        regexp: '\ \ #hosts: \["localhost:5044"\]' 
+        replace: '  hosts: ["elk.acirrustech.com:5044"]'
+    - name: Enable filebeat module
+      shell: "filebeat modules enable system"
+    
+    - name: Start filebeat
+      service:
+        name: filebeat
+        state: started
+    - name: Enable filebeat
+      service:
+        name: filebeat
+        enabled: yes
